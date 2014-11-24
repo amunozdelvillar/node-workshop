@@ -13,8 +13,9 @@ var express = require('express'),
     methodOverride = require('method-override'),
     favicon = require('serve-favicon'),
     serveStatic = require('serve-static'),
-    errorHandler = require('errorhandler');
-    Post = require('./Post');
+    errorHandler = require('errorhandler'),
+    Post = require('./Post'),
+    basicAuth = require('basic-auth');
 
 var app = express();
 
@@ -28,6 +29,28 @@ app.use(bodyParser.json());
 app.use(methodOverride('_method'));
 app.use(serveStatic(path.join(__dirname, 'public')));
 app.use(errorHandler());
+
+//auth middleware
+var auth = function(req, res, next){
+    function unauthorize(res) {
+        res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
+        return res.send(401);
+    }
+
+    var user = basicAuth(req);
+    console.log(user);
+
+    if(!user || !user.name || !user.pass){
+        return unauthorize(res);
+    }
+
+    if(user.name === 'angel' && user.pass === 'secret'){
+        return next();
+    } else  {
+        return unauthorize(res);
+    }
+
+};
 
 //Render our home page with all blog posts
 app.get('/', function(request, response){
@@ -49,7 +72,7 @@ app.get('/new', function(request, response){
 });
 
 //Create a new blog post object
-app.post('/create', function(request, response){
+app.post('/create', auth, function(request, response){
     //: Create and save a Post model
     var post = new Post({
         title: request.body.title,
@@ -65,6 +88,8 @@ app.post('/create', function(request, response){
         }
     });
 });
+
+
 
 http.createServer(app).listen(app.get('port'), function(){
     console.log('Express server listening on port ' + app.get('port'));
