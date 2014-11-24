@@ -38,7 +38,6 @@ var auth = function(req, res, next){
     }
 
     var user = basicAuth(req);
-    console.log(user);
 
     if(!user || !user.name || !user.pass){
         return unauthorize(res);
@@ -62,6 +61,22 @@ app.get('/', function(request, response){
             response.render('index', {
                 posts: posts
             });
+        }
+    });
+});
+
+//ApiAllPosts
+app.get('/allPosts', auth, function(request, response){
+    var responseData = {};
+    Post.find(function(err,posts){
+        if(err){
+            response.status(500).send('The server went full derp, never go full derp!');
+        } else {
+//            console.log(posts);
+//            posts.forEach(function(post){
+//                responseData[post[0]] = post[1];
+//            });
+            response.status(200).json(posts);
         }
     });
 });
